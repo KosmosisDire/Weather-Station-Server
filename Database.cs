@@ -45,18 +45,18 @@ namespace SQLite
         public void InsertData(SQLiteConnection conn, String filePath, Sensor sensor)
         {
             var Timestamp = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
-
+            SQLiteCommand sqlite_cmd;
             if (sensor == null)
             {
-                SQLiteCommand sqlite_cmd = new SQLiteCommand("INSERT INTO images (filePath, timestamp) VALUES (?,?)", conn);
+                sqlite_cmd = new SQLiteCommand("INSERT INTO images (filePath, timestamp) VALUES (?,?)", conn);
                 sqlite_cmd.Parameters.Add(filePath);
                 sqlite_cmd.Parameters.Add(Timestamp);
             }
             else
             {
-                SQLiteCommand sqlite_cmd = new SQLiteCommand("INSERT INTO sensor (temperature, pressure, timestamp) VALUES (?,?,?)", conn);
-                sqlite_cmd.Parameters.Add(temperature);
-                sqlite_cmd.Parameters.Add(pressure);
+                sqlite_cmd = new SQLiteCommand("INSERT INTO sensor (temperature, pressure, timestamp) VALUES (?,?,?)", conn);
+                sqlite_cmd.Parameters.Add(sensor.temp);
+                sqlite_cmd.Parameters.Add(sensor.pressure);
                 sqlite_cmd.Parameters.Add(Timestamp);
             }
 
