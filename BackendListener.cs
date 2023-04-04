@@ -1,6 +1,9 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using SQLite;
+using System.Data.SQLite;
+
 
 // this is a simple async backend server
 // it will accept async connections and write each received packet to the console and to a new file
@@ -26,7 +29,8 @@ public class BackendListener
     const int headerSize = 9;
 
     private TcpListener? listener;
-
+    public Database database = new Database();
+    public SQLiteConnection connection = new SQLiteConnection();
     public BackendListener(int port, int maxConnections, int bufferSize, string relativePath)
     {
         this.port = port;
@@ -37,6 +41,8 @@ public class BackendListener
 
     public void Start()
     {
+        connection = database.CreateConnection();
+        database.CreateTable(connection);
         listener = new TcpListener(IPAddress.Any, port);
         listener.Start();
         listener.BeginAcceptTcpClient(new AsyncCallback(AcceptTcpClientCallback), listener);
@@ -142,18 +148,22 @@ public class BackendListener
                 Console.WriteLine("Received camera data from " + clientName);
                 string fileName = relativePath + clientName + ".jpg";
                 System.IO.File.WriteAllBytes(fileName, packet);
+                database.InsertData(connection, "images", "filePath", fileName);
                 break;
             case DataType.Temperature:
                 Console.WriteLine("Received temperature data from " + clientName);
                 System.IO.File.WriteAllBytes(relativePath + clientName + "-temp.txt", Encoding.UTF8.GetBytes(BitConverter.ToSingle(packet, 0).ToString()));
+                database.InsertData(connection, "temperature ", "temperature", "?");
                 break;
             case DataType.Humidity:
                 Console.WriteLine("Received humidity data from " + clientName);
                 System.IO.File.WriteAllBytes(relativePath + clientName + "-hum.txt", Encoding.UTF8.GetBytes(BitConverter.ToSingle(packet, 0).ToString()));
+                database.InsertData(connection, "humidity ", "humidity", "?");
                 break;
             case DataType.Pressure:
                 Console.WriteLine("Received pressure data from " + clientName);
                 System.IO.File.WriteAllBytes(relativePath + clientName + "-bmp.txt", Encoding.UTF8.GetBytes(BitConverter.ToSingle(packet, 0).ToString()));
+                database.InsertData(connection, "pressure ", "pressure", "?");
                 break;
             case DataType.Name:
                 clientName = Encoding.UTF8.GetString(packet, 0, packet.Length);
