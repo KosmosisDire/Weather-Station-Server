@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Text;
 using SQLite;
 using System.Data.SQLite;
+using SensorData;
 
 
 // this is a simple async backend server
@@ -142,28 +143,27 @@ public class BackendListener
 
     bool HandlePacket(byte[] packet, DataType dataType, ref string clientName, TcpClient client)
     {
+        Sensor sensor = new Sensor();
         switch (dataType)
         {
             case DataType.Image:
                 Console.WriteLine("Received camera data from " + clientName);
                 string fileName = relativePath + clientName + ".jpg";
                 System.IO.File.WriteAllBytes(fileName, packet);
-                database.InsertData(connection, "images", "filePath", fileName);
                 break;
             case DataType.Temperature:
                 Console.WriteLine("Received temperature data from " + clientName);
                 System.IO.File.WriteAllBytes(relativePath + clientName + "-temp.txt", Encoding.UTF8.GetBytes(BitConverter.ToSingle(packet, 0).ToString()));
-                database.InsertData(connection, "temperature ", "temperature", "?");
+                sensor.temperature = BitConverter.ToSingle(packet,0).ToString();
                 break;
             case DataType.Humidity:
                 Console.WriteLine("Received humidity data from " + clientName);
                 System.IO.File.WriteAllBytes(relativePath + clientName + "-hum.txt", Encoding.UTF8.GetBytes(BitConverter.ToSingle(packet, 0).ToString()));
-                database.InsertData(connection, "humidity ", "humidity", "?");
                 break;
             case DataType.Pressure:
                 Console.WriteLine("Received pressure data from " + clientName);
                 System.IO.File.WriteAllBytes(relativePath + clientName + "-bmp.txt", Encoding.UTF8.GetBytes(BitConverter.ToSingle(packet, 0).ToString()));
-                database.InsertData(connection, "pressure ", "pressure", "?");
+                sensor.pressure = BitConverter.ToSingle(packet, 0).ToString();
                 break;
             case DataType.Name:
                 clientName = Encoding.UTF8.GetString(packet, 0, packet.Length);
@@ -179,6 +179,8 @@ public class BackendListener
                 client.Close();
                 return false;
         }
+
+        database.InsertData(connection, filePath, sensor);
 
         return true;
     }
