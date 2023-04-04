@@ -5,7 +5,6 @@ using SQLite;
 using System.Data.SQLite;
 using SensorData;
 
-
 // this is a simple async backend server
 // it will accept async connections and write each received packet to the console and to a new file
 // there will be one file per connection
@@ -144,17 +143,18 @@ public class BackendListener
     bool HandlePacket(byte[] packet, DataType dataType, ref string clientName, TcpClient client)
     {
         Sensor sensor = new Sensor();
+        string fileName = "";
         switch (dataType)
         {
             case DataType.Image:
                 Console.WriteLine("Received camera data from " + clientName);
-                string fileName = relativePath + clientName + ".jpg";
+                fileName = relativePath + clientName + ".jpg";
                 System.IO.File.WriteAllBytes(fileName, packet);
                 break;
             case DataType.Temperature:
                 Console.WriteLine("Received temperature data from " + clientName);
                 System.IO.File.WriteAllBytes(relativePath + clientName + "-temp.txt", Encoding.UTF8.GetBytes(BitConverter.ToSingle(packet, 0).ToString()));
-                sensor.temperature = BitConverter.ToSingle(packet,0).ToString();
+                sensor.temp = BitConverter.ToSingle(packet,0).ToString();
                 break;
             case DataType.Humidity:
                 Console.WriteLine("Received humidity data from " + clientName);
@@ -180,7 +180,7 @@ public class BackendListener
                 return false;
         }
 
-        database.InsertData(connection, filePath, sensor);
+        database.InsertData(connection, fileName, sensor);
 
         return true;
     }
