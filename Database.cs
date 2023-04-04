@@ -25,8 +25,8 @@ namespace SQLite
             SQLiteConnection sqlite_conn;
             // Create a new database connection:
             sqlite_conn = new SQLiteConnection("Data Source=database.db; Version = 3; New = True; Compress = True;");
-           // Open the connection:
-         try
+            // Open the connection:
+            try
             {
                 sqlite_conn.Open();
             }
@@ -62,9 +62,8 @@ namespace SQLite
 
             SQLiteCommand sqlite_cmd;
             sqlite_cmd = conn.CreateCommand();
-            sqlite_cmd.CommandText = "INSERT INTO tableName (colName) VALUES (value); ";
-           sqlite_cmd.ExecuteNonQuery();
-
+            sqlite_cmd.CommandText = "INSERT INTO (tableName) (colName) VALUES (value); ";
+            sqlite_cmd.ExecuteNonQuery();
         }
 
         static void ReadData(SQLiteConnection conn)

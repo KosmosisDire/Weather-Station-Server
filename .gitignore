@@ -2,3 +2,4 @@ data
 bin
 obj
 .vscode
+database.db
