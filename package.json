@@ -16,9 +16,9 @@
     "url": "https://github.com/KosmosisDire/Weather-Station-Server/issues"
   },
   "homepage": "https://github.com/KosmosisDire/Weather-Station-Server#readme",
+  
   "dependencies": {
-    "chart.js": "^4.2.1",
-    "install": "^0.13.0",
-    "npm": "^9.6.4"
+    "@cubejs-client/core": "^0.31.0",
+    "chart.js": "^4.0.0"
   }
 }
