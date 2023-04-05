@@ -20,7 +20,14 @@ const data = {
 };
 
 new Chart(ctx, {
-  type: 'line',
-  data: data,
+    type: 'line',
+    data: data,
+    options: {
+    scales: {
+        y: {
+        beginAtZero: true
+        }
+    }
+    }
 });
 </script>
