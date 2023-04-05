@@ -8,12 +8,9 @@ public static class Utils
     {
         try
         {
-            if (!Directory.Exists(Path.GetDirectoryName(filePath)))
+            if (!Directory.Exists(filePath))
             {
-                string? dirName = Path.GetDirectoryName(filePath);
-
-                if (dirName != null)
-                    Directory.CreateDirectory(dirName);
+                Directory.CreateDirectory(filePath);
             }
         }
         catch (Exception ex)
