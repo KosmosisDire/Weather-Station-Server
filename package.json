@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "A server and frontend for our cse590 term project",
   "main": "frontend/index.js",
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -16,5 +15,10 @@
   "bugs": {
     "url": "https://github.com/KosmosisDire/Weather-Station-Server/issues"
   },
-  "homepage": "https://github.com/KosmosisDire/Weather-Station-Server#readme"
+  "homepage": "https://github.com/KosmosisDire/Weather-Station-Server#readme",
+  "dependencies": {
+    "chart.js": "^4.2.1",
+    "install": "^0.13.0",
+    "npm": "^9.6.4"
+  }
 }

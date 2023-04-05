@@ -6,3 +6,4 @@ database.db
 /.vs/backend
 /.vs/Weather-Station-/v17
 /.vs
+/node_modules
