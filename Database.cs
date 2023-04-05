@@ -93,13 +93,13 @@ public class WeatherDatabase
 
 
     // when inserting either temp or pressure, if the previous entry is missing temp or pressure, fill it in rather than creating a new entry
-    // unless the previous timestamp is more than 3 seconds ago
+    // unless the previous timestamp is more than 1 second ago
     public void InsertTemperatureData(float temperature, string clientName)
     {
         var latestSensorData = GetLatestSensorData(clientName);
         SQLiteCommand insertCommand;
 
-        if (latestSensorData.temperature != UNDEFINED || latestSensorData.timestamp + 3 < Utils.Timestamp)
+        if (latestSensorData.temperature != UNDEFINED || latestSensorData.timestamp + 1 < Utils.Timestamp || latestSensorData.clientName != clientName)
         {
             insertCommand = new SQLiteCommand(
                 @"INSERT INTO sensor (
