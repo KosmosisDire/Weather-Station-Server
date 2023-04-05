@@ -4,28 +4,28 @@ public static class Utils
 {
     public static long Timestamp => new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
 
-    public static void WriteFileToArbitraryPath(string filePath, byte[] file)
+    public static void WriteFileToArbitraryPath(byte[] bytes, string path)
     {
         try
         {
-            if (!Directory.Exists(filePath))
+            if (!Directory.Exists(path))
             {
-                Directory.CreateDirectory(filePath);
+                Directory.CreateDirectory(path);
             }
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Error: could not create directory for file {filePath}: {ex.Message}");
+            Console.Error.WriteLine($"Error: could not create directory for file {path}: {ex.Message}");
             return;
         }
 
         try
         {
-            File.WriteAllBytes(filePath, file);
+            File.WriteAllBytes(path, bytes);
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Error: could not write file {filePath}: {ex.Message}");
+            Console.Error.WriteLine($"Error: could not write file {path}: {ex.Message}");
         }
     }
 }

@@ -139,7 +139,7 @@ public class BackendListener
         {
             case DataType.Image:
                 string filePath = Path.Join(relativePath, clientName, Utils.Timestamp.ToString() + ".jpg");
-                System.IO.File.WriteAllBytes(filePath, packet);
+                Utils.WriteFileToArbitraryPath(packet, filePath);
                 break;
             case DataType.Temperature:
                 database.InsertTemperatureData(BitConverter.ToSingle(packet, 0), clientName);
