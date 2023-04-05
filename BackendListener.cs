@@ -170,13 +170,4 @@ public class BackendListener
         if (listener == null) return;
         listener.Stop();
     }
-
-    public void ClearLogs()
-    {
-        System.IO.DirectoryInfo di = new System.IO.DirectoryInfo(relativePath);
-        foreach (System.IO.FileInfo file in di.GetFiles())
-        {
-            file.Delete();
-        }
-    }
 }
