@@ -3,3 +3,6 @@ bin
 obj
 .vscode
 database.db
+/.vs/backend
+/.vs/Weather-Station-/v17
+/.vs
