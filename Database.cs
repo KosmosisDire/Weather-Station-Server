@@ -42,17 +42,19 @@ public class WeatherDatabase
 
         string createBMPTableCommand = 
         @"CREATE TABLE IF NOT EXISTS sensor (
-            timestamp INTEGER PRIMARY KEY, 
+            timestamp INTEGER, 
             clientName VARCHAR(256), 
             temperature REAL, 
             pressure REAL
+            PRIMARY KEY (timestamp, clientName)
         )";
 
         string createCameraTableCommand = 
         @"CREATE TABLE IF NOT EXISTS images (
-            timestamp INTEGER PRIMARY KEY, 
+            timestamp INTEGER, 
             clientName VARCHAR(256), 
             filePath VARCHAR(256)
+            PRIMARY KEY (timestamp, clientName)
         )";
 
         createTablesCommand = connection.CreateCommand();
