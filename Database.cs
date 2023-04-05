@@ -70,7 +70,7 @@ public class WeatherDatabase
         selectCommand = new SQLiteCommand(
             @"SELECT * FROM sensor WHERE clientName = ? ORDER BY timestamp DESC LIMIT 1", connection);
 
-        selectCommand.Parameters.Add(clientName);
+        selectCommand.Parameters.AddWithValue("clientName", clientName);
 
         try
         {
@@ -108,34 +108,18 @@ public class WeatherDatabase
                     temperature,
                     pressure) VALUES (?,?,?,?)", connection);
 
-            SQLiteParameter timestampParam = new SQLiteParameter();
-            timestampParam.Value = Utils.Timestamp;
-            insertCommand.Parameters.Add(timestampParam);
-
-            SQLiteParameter clientNameParam = new SQLiteParameter();
-            clientNameParam.Value = clientName;
-            insertCommand.Parameters.Add(clientNameParam);
-
-            SQLiteParameter temperatureParam = new SQLiteParameter();
-            temperatureParam.Value = temperature;
-            insertCommand.Parameters.Add(temperatureParam);
-
-            SQLiteParameter pressureParam = new SQLiteParameter();
-            pressureParam.Value = UNDEFINED;
-            insertCommand.Parameters.Add(pressureParam);
+            insertCommand.Parameters.AddWithValue("timestamp", Utils.Timestamp);
+            insertCommand.Parameters.AddWithValue("clientName", clientName);
+            insertCommand.Parameters.AddWithValue("temperature", temperature);
+            insertCommand.Parameters.AddWithValue("pressure", UNDEFINED);
         }
         else
         {
             insertCommand = new SQLiteCommand(
                 @"UPDATE sensor SET temperature = ? WHERE timestamp = ?", connection);
 
-            SQLiteParameter temperatureParam = new SQLiteParameter();
-            temperatureParam.Value = temperature;
-            insertCommand.Parameters.Add(temperatureParam);
-
-            SQLiteParameter timestampParam = new SQLiteParameter();
-            timestampParam.Value = latestSensorData.timestamp;
-            insertCommand.Parameters.Add(timestampParam);
+            insertCommand.Parameters.AddWithValue("temperature", temperature);
+            insertCommand.Parameters.AddWithValue("timestamp", latestSensorData.timestamp);
         }
 
         try
@@ -162,34 +146,18 @@ public class WeatherDatabase
                     temperature,
                     pressure) VALUES (?,?,?,?)", connection);
 
-            SQLiteParameter timestampParam = new SQLiteParameter();
-            timestampParam.Value = Utils.Timestamp;
-            insertCommand.Parameters.Add(timestampParam);
-
-            SQLiteParameter clientNameParam = new SQLiteParameter();
-            clientNameParam.Value = clientName;
-            insertCommand.Parameters.Add(clientNameParam);
-
-            SQLiteParameter temperatureParam = new SQLiteParameter();
-            temperatureParam.Value = UNDEFINED;
-            insertCommand.Parameters.Add(temperatureParam);
-
-            SQLiteParameter pressureParam = new SQLiteParameter();
-            pressureParam.Value = pressure;
-            insertCommand.Parameters.Add(pressureParam);
+            insertCommand.Parameters.AddWithValue("timestamp", Utils.Timestamp);
+            insertCommand.Parameters.AddWithValue("clientName", clientName);
+            insertCommand.Parameters.AddWithValue("temperature", UNDEFINED);
+            insertCommand.Parameters.AddWithValue("pressure", pressure);
         }
         else
         {
             insertCommand = new SQLiteCommand(
                 @"UPDATE sensor SET pressure = ? WHERE timestamp = ?", connection);
 
-            SQLiteParameter pressureParam = new SQLiteParameter();
-            pressureParam.Value = pressure;
-            insertCommand.Parameters.Add(pressureParam);
-
-            SQLiteParameter timestampParam = new SQLiteParameter();
-            timestampParam.Value = latestSensorData.timestamp;
-            insertCommand.Parameters.Add(timestampParam);
+            insertCommand.Parameters.AddWithValue("pressure", pressure);
+            insertCommand.Parameters.AddWithValue("timestamp", latestSensorData.timestamp);
         }
 
         try
@@ -213,17 +181,9 @@ public class WeatherDatabase
                 clientName, 
                 filePath) VALUES (?,?,?)", connection);
 
-        SQLiteParameter timestampParam = new SQLiteParameter();
-        timestampParam.Value = Utils.Timestamp;
-        insertCommand.Parameters.Add(timestampParam);
-
-        SQLiteParameter clientNameParam = new SQLiteParameter();
-        clientNameParam.Value = clientName;
-        insertCommand.Parameters.Add(clientNameParam);
-
-        SQLiteParameter filePathParam = new SQLiteParameter();
-        filePathParam.Value = filePath;
-        insertCommand.Parameters.Add(filePathParam);
+        insertCommand.Parameters.AddWithValue("timestamp", Utils.Timestamp);
+        insertCommand.Parameters.AddWithValue("clientName", clientName);
+        insertCommand.Parameters.AddWithValue("filePath", filePath);
 
         try
         {
