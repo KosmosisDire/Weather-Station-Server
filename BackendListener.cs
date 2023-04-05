@@ -1,14 +1,7 @@
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using SQLite;
 using System.Data.SQLite;
-using SensorData;
-
-// this is a simple async backend server
-// it will accept async connections and write each received packet to the console and to a new file
-// there will be one file per connection
-// every packet received on one connection will be written on a new line
 
 public enum DataType : byte
 {
@@ -29,8 +22,8 @@ public class BackendListener
     const int headerSize = 9;
 
     private TcpListener? listener;
-    public Database database = new Database();
-    public SQLiteConnection connection = new SQLiteConnection();
+    public WeatherDatabase database = new();
+
     public BackendListener(int port, int maxConnections, int bufferSize, string relativePath)
     {
         this.port = port;
@@ -41,8 +34,6 @@ public class BackendListener
 
     public void Start()
     {
-        connection = database.CreateConnection();
-        database.CreateTable(connection);
         listener = new TcpListener(IPAddress.Any, port);
         listener.Start();
         listener.BeginAcceptTcpClient(new AsyncCallback(AcceptTcpClientCallback), listener);
@@ -142,45 +133,34 @@ public class BackendListener
 
     bool HandlePacket(byte[] packet, DataType dataType, ref string clientName, TcpClient client)
     {
-        Sensor sensor = new Sensor();
-        string fileName = "";
+        Console.WriteLine($"Received packet of type {dataType} from {clientName}");
+
         switch (dataType)
         {
             case DataType.Image:
-                Console.WriteLine("Received camera data from " + clientName);
-                fileName = relativePath + clientName + ".jpg";
-                System.IO.File.WriteAllBytes(fileName, packet);
+                string filePath = Path.Join(relativePath, clientName, Utils.Timestamp.ToString() + ".jpg");
+                System.IO.File.WriteAllBytes(filePath, packet);
                 break;
             case DataType.Temperature:
-                Console.WriteLine("Received temperature data from " + clientName);
-                System.IO.File.WriteAllBytes(relativePath + clientName + "-temp.txt", Encoding.UTF8.GetBytes(BitConverter.ToSingle(packet, 0).ToString()));
-                sensor.temp = BitConverter.ToSingle(packet,0).ToString();
-                break;
-            case DataType.Humidity:
-                Console.WriteLine("Received humidity data from " + clientName);
-                System.IO.File.WriteAllBytes(relativePath + clientName + "-hum.txt", Encoding.UTF8.GetBytes(BitConverter.ToSingle(packet, 0).ToString()));
+                database.InsertTemperatureData(BitConverter.ToSingle(packet, 0), clientName);
                 break;
             case DataType.Pressure:
-                Console.WriteLine("Received pressure data from " + clientName);
-                System.IO.File.WriteAllBytes(relativePath + clientName + "-bmp.txt", Encoding.UTF8.GetBytes(BitConverter.ToSingle(packet, 0).ToString()));
-                sensor.pressure = BitConverter.ToSingle(packet, 0).ToString();
+                database.InsertPressureData(BitConverter.ToSingle(packet, 0), clientName);
                 break;
             case DataType.Name:
                 clientName = Encoding.UTF8.GetString(packet, 0, packet.Length);
                 Console.WriteLine("Updated client name to: " + clientName);
                 break;
             case DataType.Other:
-                Console.WriteLine("Received other data from " + clientName);
+                Console.WriteLine($"Received other data from {clientName}:");
                 Console.WriteLine(Encoding.UTF8.GetString(packet, 0, packet.Length));
                 break;
             default:
-                Console.Error.Write("Received unknown data from " + clientName);
+                Console.Error.Write($"Error: unknown data type {dataType}. Closing connection.");
                 client.GetStream().Dispose();
                 client.Close();
                 return false;
         }
-
-        database.InsertData(connection, fileName, sensor);
 
         return true;
     }

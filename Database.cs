@@ -1,74 +1,180 @@
-using System;
-using System.Collections.Generic;
 using System.Data.SQLite;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using SensorData;
 
-namespace SQLite
+
+public struct SensorData
 {
-    public class Database
-    {
-
-        public SQLiteConnection CreateConnection()
-        {
-
-            SQLiteConnection sqlite_conn;
-            // Create a new database connection:
-            sqlite_conn = new SQLiteConnection("Data Source=database.db; Version = 3; New = True; Compress = True;");
-            // Open the connection:
-            try
-            {
-                sqlite_conn.Open();
-            }
-            catch (Exception ex)
-            {
-
-            }
-            return sqlite_conn;
-        }
-
-        public void CreateTable(SQLiteConnection conn)
-        {
-
-            SQLiteCommand sqlite_cmd;
-            string Createsql = "CREATE TABLE IF NOT EXISTS sensor (temperature VARCHAR(20), pressure VARCHAR(20), timestamp DATETIME)";
-            string Createsql1 = "CREATE TABLE IF NOT EXISTS images (filePath VARCHAR(250), timestamp DATETIME)";
-            sqlite_cmd = conn.CreateCommand();
-            sqlite_cmd.CommandText = Createsql;
-            sqlite_cmd.ExecuteNonQuery();
-            sqlite_cmd.CommandText = Createsql1;
-            sqlite_cmd.ExecuteNonQuery();
-        }
-
-        public void InsertData(SQLiteConnection conn, String filePath, Sensor sensor)
-        {
-            var Timestamp = new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
-            SQLiteCommand sqlite_cmd;
-            if (sensor == null)
-            {
-                sqlite_cmd = new SQLiteCommand("INSERT INTO images (filePath, timestamp) VALUES (?,?)", conn);
-                sqlite_cmd.Parameters.Add(filePath);
-                sqlite_cmd.Parameters.Add(Timestamp);
-            }
-            else
-            {
-                sqlite_cmd = new SQLiteCommand("INSERT INTO sensor (temperature, pressure, timestamp) VALUES (?,?,?)", conn);
-                sqlite_cmd.Parameters.Add(sensor.temp);
-                sqlite_cmd.Parameters.Add(sensor.pressure);
-                sqlite_cmd.Parameters.Add(Timestamp);
-            }
-
-            try
-            {
-                sqlite_cmd.ExecuteNonQuery();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-        }
-
-    }
+    public long timestamp;
+    public string clientName;
+    public float temperature;
+    public float pressure;
 }
+
+public class WeatherDatabase
+{
+    SQLiteConnection connection;
+    const long UNDEFINED = -1234567;
+
+    public WeatherDatabase()
+    {
+        connection = Connect();
+        CreateTables();
+    }
+
+    SQLiteConnection Connect()
+    {
+        var newConnection = new SQLiteConnection("Data Source=./data/database.db; Version = 3; New = True; Compress = True;");
+        
+        try
+        {
+            newConnection.Open();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+
+        return newConnection;
+    }
+
+    void CreateTables()
+    {
+        SQLiteCommand createTablesCommand;
+
+        string createBMPTableCommand = 
+        @"CREATE TABLE IF NOT EXISTS sensor (
+            timestamp INTEGER PRIMARY KEY, 
+            clientName VARCHAR(256), 
+            temperature REAL, 
+            pressure REAL
+        )";
+
+        string createCameraTableCommand = 
+        @"CREATE TABLE IF NOT EXISTS images (
+            timestamp INTEGER PRIMARY KEY, 
+            clientName VARCHAR(256), 
+            filePath VARCHAR(256)
+        )";
+
+        createTablesCommand = connection.CreateCommand();
+        createTablesCommand.CommandText = createBMPTableCommand;
+        createTablesCommand.ExecuteNonQuery();
+        createTablesCommand.CommandText = createCameraTableCommand;
+        createTablesCommand.ExecuteNonQuery();
+    }
+
+    public SensorData GetLatestSensorData(string clientName)
+    {
+        SQLiteCommand selectCommand;
+        SensorData sensorData = new();
+
+        selectCommand = new SQLiteCommand(
+            @"SELECT * FROM sensor WHERE clientName = ? ORDER BY timestamp DESC LIMIT 1", connection);
+
+        selectCommand.Parameters.Add(clientName);
+
+        try
+        {
+            using SQLiteDataReader reader = selectCommand.ExecuteReader();
+            if (reader.Read())
+            {
+                sensorData.timestamp = reader.GetInt64(0);
+                sensorData.clientName = reader.GetString(1);
+                sensorData.temperature = reader.GetFloat(2);
+                sensorData.pressure = reader.GetFloat(3);
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+
+        return sensorData;
+    }
+
+
+    // when inserting either temp or pressure, if the previous entry is missing temp or pressure, fill it in rather than creating a new entry
+    // unless the previous timestamp is more than 3 seconds ago
+    public void InsertTemperatureData(float temperature, string clientName)
+    {
+        var latestSensorData = GetLatestSensorData(clientName);
+        SQLiteCommand insertCommand;
+
+        if (latestSensorData.temperature != UNDEFINED || latestSensorData.timestamp + 3 < Utils.Timestamp)
+        {
+            insertCommand = new SQLiteCommand(
+                @"INSERT INTO sensor (
+                    timestamp, 
+                    clientName, 
+                    temperature,
+                    pressure) VALUES (?,?,?,?)", connection);
+
+            insertCommand.Parameters.Add(Utils.Timestamp);
+            insertCommand.Parameters.Add(clientName);
+            insertCommand.Parameters.Add(temperature);
+            insertCommand.Parameters.Add(UNDEFINED);
+        }
+        else
+        {
+            insertCommand = new SQLiteCommand(
+                @"UPDATE sensor SET temperature = ? WHERE timestamp = ?", connection);
+
+            insertCommand.Parameters.Add(temperature);
+            insertCommand.Parameters.Add(latestSensorData.timestamp);
+        }
+    }
+
+    public void InsertPressureData(float pressure, string clientName)
+    {
+        var latestSensorData = GetLatestSensorData(clientName);
+        SQLiteCommand insertCommand;
+
+        if (latestSensorData.pressure != UNDEFINED || latestSensorData.timestamp + 3 < Utils.Timestamp)
+        {
+            insertCommand = new SQLiteCommand(
+                @"INSERT INTO sensor (
+                    timestamp, 
+                    clientName, 
+                    temperature,
+                    pressure) VALUES (?,?,?,?)", connection);
+
+            insertCommand.Parameters.Add(Utils.Timestamp);
+            insertCommand.Parameters.Add(clientName);
+            insertCommand.Parameters.Add(UNDEFINED);
+            insertCommand.Parameters.Add(pressure);
+        }
+        else
+        {
+            insertCommand = new SQLiteCommand(
+                @"UPDATE sensor SET pressure = ? WHERE timestamp = ?", connection);
+
+            insertCommand.Parameters.Add(pressure);
+            insertCommand.Parameters.Add(latestSensorData.timestamp);
+        }
+    }
+
+    public void InsertCameraData(string filePath, string clientName)
+    {
+        SQLiteCommand insertCommand;
+
+        insertCommand = new SQLiteCommand(
+            @"INSERT INTO images (
+                timestamp, 
+                clientName, 
+                filePath) VALUES (?,?,?)", connection);
+
+        insertCommand.Parameters.Add(Utils.Timestamp);
+        insertCommand.Parameters.Add(clientName);
+        insertCommand.Parameters.Add(filePath);
+
+        try
+        {
+            insertCommand.ExecuteNonQuery();
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+    }
+
+}
+
