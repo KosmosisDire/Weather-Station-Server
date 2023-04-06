@@ -12,9 +12,6 @@ async function waitUntil(conditionFunction, interval = 200)
 // Open a WebSocket connection
 var ws = new WebSocket('wss://nathang.dev:45224');
 
-// Wait until the WebSocket is open
-await waitUntil(() => ws.readyState === ws.OPEN);
-
 // Send a message containing the request for the object array
 ws.send('get-object-array');
 
