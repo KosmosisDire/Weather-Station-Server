@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<title>Chart.js Example</title>
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
 	<div>
 		<canvas id="temperature-chart"></canvas>
@@ -13,174 +15,27 @@
 	</div>
 
 	<script>
-		// Load data from SQLite database
-		var dataUrl = "../data/database.db";
-		var temperatureData = [];
-		var pressureData = [];
+		// Open a WebSocket connection
+		var ws = new WebSocket('ws://nathang.dev:45224');
 
-		// Use fetch API to load data from the database
-		fetch(dataUrl)
-			.then(function(response) {
-				return response.json();
-			})
-			.then(function(data) {
-				// Process data and create datasets
-				var clientNames = new Set();
-				data.forEach(function(datum) {
-					// Convert timestamp to day of the week and time of day
-					var date = new Date(datum.timestamp * 1000);
-					var dayOfWeek = date.toLocaleString('en-US', {weekday: 'long'});
-					var timeOfDay = date.toLocaleString('en-US', {hour: 'numeric', minute: 'numeric'});
+		// Send a message containing the request for the object array
+		ws.send('get-object-array');
 
-					if (datum.sensor === 'temperature') {
-						// Add temperature data to the dataset
-						if (!temperatureData[dayOfWeek]) {
-							temperatureData[dayOfWeek] = {};
-						}
-						if (!temperatureData[dayOfWeek][timeOfDay]) {
-							temperatureData[dayOfWeek][timeOfDay] = {};
-						}
-						if (!temperatureData[dayOfWeek][timeOfDay][datum.clientName]) {
-							temperatureData[dayOfWeek][timeOfDay][datum.clientName] = [];
-						}
-						temperatureData[dayOfWeek][timeOfDay][datum.clientName].push(datum.value);
-						clientNames.add(datum.clientName);
-					} else if (datum.sensor === 'pressure') {
-						// Add pressure data to the dataset
-						if (!pressureData[dayOfWeek]) {
-							pressureData[dayOfWeek] = {};
-						}
-						if (!pressureData[dayOfWeek][timeOfDay]) {
-							pressureData[dayOfWeek][timeOfDay] = {};
-						}
-						if (!pressureData[dayOfWeek][timeOfDay][datum.clientName]) {
-							pressureData[dayOfWeek][timeOfDay][datum.clientName] = [];
-						}
-						pressureData[dayOfWeek][timeOfDay][datum.clientName].push(datum.value);
-						clientNames.add(datum.clientName);
-					}
-				});
+		// Listen for incoming messages from the server
+		ws.onmessage = function(event) {
+		// Parse the incoming message as JSON
+		var message = JSON.parse(event.data);
 
-				// Create datasets for temperature chart
-				var temperatureDatasets = [];
-				clientNames.forEach(function(clientName) {
-					var dataset = {
-						label: clientName,
-						data: [],
-						fill: false,
-						borderColor: getRandomColor()
-					};
-					for (var dayOfWeek in temperatureData) {
-						for (var timeOfDay in temperatureData[dayOfWeek]) {
-							if (temperatureData[dayOfWeek][timeOfDay][clientName]) {
-								var values = temperatureData[dayOfWeek][timeOfDay][clientName];
-								var average = values.reduce(function(sum, value) {
-									return sum + value;
-								}) / values.length;
-							dataset.data.push({x: dayOfWeek + ' ' + timeOfDay, y: average});
-						}
-					}
-				}
-				temperatureDatasets.push(dataset);
-			});
-
-			// Create datasets for pressure chart
-			var pressureDatasets = [];
-			clientNames.forEach(function(clientName) {
-				var dataset = {
-					label: clientName,
-					data: [],
-					fill: false,
-					borderColor: getRandomColor()
-				};
-				for (var dayOfWeek in pressureData) {
-					for (var timeOfDay in pressureData[dayOfWeek]) {
-						if (pressureData[dayOfWeek][timeOfDay][clientName]) {
-							var values = pressureData[dayOfWeek][timeOfDay][clientName];
-							var average = values.reduce(function(sum, value) {
-								return sum + value;
-							}) / values.length;
-							dataset.data.push({x: dayOfWeek + ' ' + timeOfDay, y: average});
-						}
-					}
-				}
-				pressureDatasets.push(dataset);
-			});
-
-			// Draw charts using Chart.js
-			var temperatureChart = new Chart(document.getElementById('temperature-chart').getContext('2d'), {
-				type: 'line',
-				data: {
-					datasets: temperatureDatasets
-				},
-				options: {
-					scales: {
-						xAxes: [{
-							type: 'time',
-							time: {
-								parser: 'ddd H:mm',
-								unit: 'hour',
-								displayFormats: {
-									hour: 'ddd H:mm'
-								}
-							},
-							scaleLabel: {
-								display: true,
-								labelString: 'Day of week and time of day'
-							}
-						}],
-						yAxes: [{
-							scaleLabel: {
-								display: true,
-								labelString: 'Temperature'
-							}
-						}]
-					}
-				}
-			});
-
-			var pressureChart = new Chart(document.getElementById('pressure-chart').getContext('2d'), {
-				type: 'line',
-				data: {
-					datasets: pressureDatasets
-				},
-				options: {
-					scales: {
-						xAxes: [{
-							type: 'time',
-							time: {
-								parser: 'ddd H:mm',
-								unit: 'hour',
-								displayFormats: {
-									hour: 'ddd H:mm'
-								}
-							},
-							scaleLabel: {
-								display: true,
-								labelString: 'Day of week and time of day'
-							}
-						}],
-						yAxes: [{
-							scaleLabel: {
-								display: true,
-								labelString: 'Pressure'
-							}
-						}]
-					}
-				}
-			});
-		});
-
-	// Function to generate random colors for chart lines
-	function getRandomColor() {
-		var letters = '0123456789ABCDEF';
-		var color = '#';
-		for (var i = 0; i < 6; i++) {
-			color += letters[Math.floor(Math.random() * 16)];
+		// Check if the message is a response to the object array request
+		if (message.type === 'object-array') {
+			// Do something with the object array
+			var objectArray = message.data;
+			console.log(objectArray);
 		}
-		return color;
-	}
-</script>
+		};
+
+	</script>
 
 </body>
+
 </html>
