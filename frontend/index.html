@@ -18,20 +18,25 @@
 		// Open a WebSocket connection
 		var ws = new WebSocket('wss://nathang.dev:45224');
 
+		while (ws.readyState != 1) {
+			console.log("Waiting for connection");
+		}
+
 		// Send a message containing the request for the object array
 		ws.send('get-object-array');
 
 		// Listen for incoming messages from the server
-		ws.onmessage = function(event) {
-		// Parse the incoming message as JSON
-		var message = JSON.parse(event.data);
+		ws.onmessage = function(event) 
+		{
+			// Parse the incoming message as JSON
+			var message = JSON.parse(event.data);
 
-		// Check if the message is a response to the object array request
-		if (message.type === 'object-array') {
-			// Do something with the object array
-			var objectArray = message.data;
-			console.log(objectArray);
-		}
+			// Check if the message is a response to the object array request
+			if (message.type === 'object-array') {
+				// Do something with the object array
+				var objectArray = message.data;
+				console.log(objectArray);
+			}
 		};
 
 	</script>
