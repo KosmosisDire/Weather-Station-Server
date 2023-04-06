@@ -45,7 +45,7 @@ public class WeatherDatabase
             timestamp INTEGER, 
             clientName VARCHAR(256), 
             temperature REAL, 
-            pressure REAL
+            pressure REAL,
             PRIMARY KEY (timestamp, clientName)
         )";
 
@@ -53,7 +53,7 @@ public class WeatherDatabase
         @"CREATE TABLE IF NOT EXISTS images (
             timestamp INTEGER, 
             clientName VARCHAR(256), 
-            filePath VARCHAR(256)
+            filePath VARCHAR(256),
             PRIMARY KEY (timestamp, clientName)
         )";
 
