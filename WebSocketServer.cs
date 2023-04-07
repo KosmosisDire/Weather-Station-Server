@@ -57,6 +57,7 @@ public class WebSocketServer
 
     private static string ProcessRequest(string request)
     {
+        Console.WriteLine("Received request: " + request);
         // Process the request and return a response
         return "Response to " + request;
     }
