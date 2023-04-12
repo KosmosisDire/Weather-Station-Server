@@ -21,6 +21,8 @@ public class WebSocketServer
             {
                 HttpListenerWebSocketContext webSocketContext = await context.AcceptWebSocketAsync(subProtocol: null);
 
+                Console.WriteLine("Client connected");
+
                 // Handle the WebSocket connection
                 await HandleWebSocket(webSocketContext.WebSocket);
             }
