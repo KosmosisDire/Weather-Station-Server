@@ -3,26 +3,35 @@ using System.Data.SQLite;
 
 public struct SensorData
 {
+    public bool isValid = false;
     public long timestamp;
     public string clientName;
-    public float temperature;
-    public float pressure;
+    public float? temperature;
+    public float? pressure;
+
+    public SensorData(long timestamp, string clientName, float? temperature, float? pressure)
+    {
+        this.isValid = true;
+        this.timestamp = timestamp;
+        this.clientName = clientName;
+        this.temperature = temperature;
+        this.pressure = pressure;
+    }
 }
 
 public class WeatherDatabase
 {
     SQLiteConnection connection;
-    const long UNDEFINED = -1234567;
 
-    public WeatherDatabase()
+    public WeatherDatabase(string databasePath)
     {
-        connection = Connect();
+        connection = Connect(databasePath);
         CreateTables();
     }
 
-    SQLiteConnection Connect()
+    SQLiteConnection Connect(string databasePath)
     {
-        var newConnection = new SQLiteConnection("Data Source=./data/database.db; Version = 3; New = True; Compress = True;");
+        var newConnection = new SQLiteConnection($"Data Source={Path.Join(databasePath, "database.db")}; Version = 3; New = True; Compress = True;");
         
         try
         {
@@ -64,15 +73,17 @@ public class WeatherDatabase
         createTablesCommand.ExecuteNonQuery();
     }
 
-    public SensorData GetLatestSensorData(string clientName)
+    public SensorData GetClosestSensorData(string clientName, long timestamp, int maxDistance = int.MaxValue)
     {
         SQLiteCommand selectCommand;
         SensorData sensorData = new();
 
         selectCommand = new SQLiteCommand(
-            @"SELECT * FROM sensor WHERE clientName = ? ORDER BY timestamp DESC LIMIT 1", connection);
+            @"SELECT * FROM sensor WHERE clientName = ? ORDER BY ABS(timestamp - ?) LIMIT ?", connection);
 
         selectCommand.Parameters.AddWithValue("clientName", clientName);
+        selectCommand.Parameters.AddWithValue("timestamp", timestamp);
+        selectCommand.Parameters.AddWithValue("limit", 1);
 
         try
         {
@@ -81,8 +92,9 @@ public class WeatherDatabase
             {
                 sensorData.timestamp = reader.GetInt64(0);
                 sensorData.clientName = reader.GetString(1);
-                sensorData.temperature = reader.GetFloat(2);
-                sensorData.pressure = reader.GetFloat(3);
+                sensorData.temperature = reader.IsDBNull(2) ? null : reader.GetFloat(2);
+                sensorData.pressure = reader.IsDBNull(3) ? null : reader.GetFloat(3);
+                sensorData.isValid = true;
             }
         }
         catch (Exception ex)
@@ -90,18 +102,30 @@ public class WeatherDatabase
             throw new Exception(ex.Message);
         }
 
+        if (Math.Abs(sensorData.timestamp - timestamp) > maxDistance)
+            sensorData.isValid = false;
+
         return sensorData;
     }
 
 
-    // when inserting either temp or pressure, if the previous entry is missing temp or pressure, fill it in rather than creating a new entry
-    // unless the previous timestamp is more than 30 seconds ago
+    // when inserting either temp or pressure, if the closest entry is missing temp or pressure, fill it in rather than creating a new entry
     public void InsertTemperatureData(float temperature, string clientName)
     {
-        var latestSensorData = GetLatestSensorData(clientName);
+        long timestamp = Utils.Timestamp;
+        var closestSensorData = GetClosestSensorData(clientName, timestamp, 5);
         SQLiteCommand insertCommand;
 
-        if (latestSensorData.temperature != UNDEFINED || latestSensorData.timestamp + 30 < Utils.Timestamp || latestSensorData.clientName != clientName)
+        if (closestSensorData.isValid && closestSensorData.temperature == null)
+        {
+            insertCommand = new SQLiteCommand(
+                @"UPDATE sensor SET temperature = ? WHERE timestamp = ? AND clientName = ?", connection);
+
+            insertCommand.Parameters.AddWithValue("temperature", temperature);
+            insertCommand.Parameters.AddWithValue("timestamp", closestSensorData.timestamp);
+            insertCommand.Parameters.AddWithValue("clientName", clientName);
+        }
+        else
         {
             insertCommand = new SQLiteCommand(
                 @"INSERT INTO sensor (
@@ -110,18 +134,10 @@ public class WeatherDatabase
                     temperature,
                     pressure) VALUES (?,?,?,?)", connection);
 
-            insertCommand.Parameters.AddWithValue("timestamp", Utils.Timestamp);
+            insertCommand.Parameters.AddWithValue("timestamp", timestamp);
             insertCommand.Parameters.AddWithValue("clientName", clientName);
             insertCommand.Parameters.AddWithValue("temperature", temperature);
-            insertCommand.Parameters.AddWithValue("pressure", UNDEFINED);
-        }
-        else
-        {
-            insertCommand = new SQLiteCommand(
-                @"UPDATE sensor SET temperature = ? WHERE timestamp = ?", connection);
-
-            insertCommand.Parameters.AddWithValue("temperature", temperature);
-            insertCommand.Parameters.AddWithValue("timestamp", latestSensorData.timestamp);
+            insertCommand.Parameters.AddWithValue("pressure", DBNull.Value);
         }
 
         try
@@ -130,16 +146,26 @@ public class WeatherDatabase
         }
         catch (Exception ex)
         {
-            throw new Exception(ex.Message);
+            Console.Error.WriteLine(ex.Message);
         }
     }
 
     public void InsertPressureData(float pressure, string clientName)
     {
-        var latestSensorData = GetLatestSensorData(clientName);
+        long timestamp = Utils.Timestamp;
+        var latestSensorData = GetClosestSensorData(clientName, timestamp, 5);
         SQLiteCommand insertCommand;
 
-        if (latestSensorData.pressure != UNDEFINED || latestSensorData.timestamp + 30 < Utils.Timestamp || latestSensorData.clientName != clientName)
+        if (latestSensorData.isValid && latestSensorData.pressure == null)
+        {
+            insertCommand = new SQLiteCommand(
+                @"UPDATE sensor SET pressure = ? WHERE timestamp = ? AND clientName = ?", connection);
+
+            insertCommand.Parameters.AddWithValue("pressure", pressure);
+            insertCommand.Parameters.AddWithValue("timestamp", latestSensorData.timestamp);
+            insertCommand.Parameters.AddWithValue("clientName", clientName);
+        }
+        else
         {
             insertCommand = new SQLiteCommand(
                 @"INSERT INTO sensor (
@@ -148,18 +174,10 @@ public class WeatherDatabase
                     temperature,
                     pressure) VALUES (?,?,?,?)", connection);
 
-            insertCommand.Parameters.AddWithValue("timestamp", Utils.Timestamp);
+            insertCommand.Parameters.AddWithValue("timestamp", timestamp);
             insertCommand.Parameters.AddWithValue("clientName", clientName);
-            insertCommand.Parameters.AddWithValue("temperature", UNDEFINED);
+            insertCommand.Parameters.AddWithValue("temperature", DBNull.Value);
             insertCommand.Parameters.AddWithValue("pressure", pressure);
-        }
-        else
-        {
-            insertCommand = new SQLiteCommand(
-                @"UPDATE sensor SET pressure = ? WHERE timestamp = ?", connection);
-
-            insertCommand.Parameters.AddWithValue("pressure", pressure);
-            insertCommand.Parameters.AddWithValue("timestamp", latestSensorData.timestamp);
         }
 
         try
@@ -168,7 +186,7 @@ public class WeatherDatabase
         }
         catch (Exception ex)
         {
-            throw new Exception(ex.Message);
+            Console.Error.WriteLine(ex.Message);
         }
     }
 

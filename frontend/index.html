@@ -2,26 +2,68 @@
 <html>
 
 <head>
-	<title>Chart.js Example</title>
-	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<title>Weather Monitor</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="description" content="Weather Monitor">
+	<meta name="author" content="Nathan George">
 
-	<script src="sql.js"></script>
-	<script type="module" src="index.js"></script>
-	<link rel="stylesheet" href="style.css">
+	<script src="./sql.js"></script>
+	<script src="./luxon.min.js"></script>
+
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon"></script>
+	<script src='https://code.jquery.com/jquery-3.6.0.js'></script>
+
+	<script type="module" src="./index.js"></script>
+	<link rel="stylesheet" href="./styles.css">
 </head>
 
 <body class="dark-theme">
-	<div class="row">
 
+	<div class="row" style = "gap: 25px;">
+		<div>
+			<label class="theme-toggle" for="theme_toggle">
+				<input class="toggle__input" type="checkbox" id="theme_toggle">
+				<div class="toggle__fill"></div>
+			</label>
+		</div>
+
+		<vr></vr>
+
+		<div class="labeled-container">
+			<label class="progress-bar-label">Next Sample</label>
+			<progress id="bmp-progress" class="progress-bar" value="0" max="1000"></progress>
+		</div>
+
+		<vr></vr>
+
+		<div class="labeled-container">
+			<label class="progress-bar-label">Next Image</label>
+			<progress id="image-progress" class="progress-bar" value="0" max="1000"></progress>
+		</div>
+
+		<vr></vr>
+		<div class="labeled-container">
+		<label for="graphed-hours-input">Graphed Hours: </label>
+		<input style="width: 3em;" type="number" id="graphed-hours-input" name="graphed-hours-input" class="text-input" placeholder="24">
+		</div>
+		
+	
+	</div>
+	
+	<div class="row" style="min-height: 390px;">
+	
 		<div class="chart-container">
 			<canvas id="pressure-chart"></canvas>
 		</div>
-
+		<vr></vr>
 		<div class="chart-container">
 			<canvas id="temperature-chart"></canvas>
 		</div>
-
+	
 	</div>
+	
 </body>
 
 </html>

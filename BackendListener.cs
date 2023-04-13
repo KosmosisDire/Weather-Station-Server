@@ -18,18 +18,21 @@ public class BackendListener
     public int port;
     public int maxConnections;
     public int bufferSize;
-    public string relativePath;
+    public string dataPath;
+    public string webRelativeDataPath;
     const int headerSize = 9;
 
     private TcpListener? listener;
-    public WeatherDatabase database = new();
+    public WeatherDatabase database;
 
-    public BackendListener(int port, int maxConnections, int bufferSize, string relativePath)
+    public BackendListener(int port, int maxConnections, int bufferSize, string dataPath, string webRelativeDataPath)
     {
         this.port = port;
         this.maxConnections = maxConnections;
         this.bufferSize = bufferSize;
-        this.relativePath = relativePath;
+        this.dataPath = dataPath;
+        this.webRelativeDataPath = webRelativeDataPath;
+        this.database = new WeatherDatabase(dataPath);
     }
 
     public void Start()
@@ -46,11 +49,11 @@ public class BackendListener
         NetworkStream stream = client.GetStream();
         byte[] buffer = new byte[bufferSize];
 
-        stream.BeginRead(buffer, 0, bufferSize, new AsyncCallback(ReadCallback), new object[] { client, stream, buffer, ""});
+        stream.BeginRead(buffer, 0, headerSize, new AsyncCallback(ReadCallback), new object[] { client, stream, buffer, ""});
         listener.BeginAcceptTcpClient(new AsyncCallback(AcceptTcpClientCallback), listener);
     }
 
-    private void ReadCallback(IAsyncResult ar)
+    private async void ReadCallback(IAsyncResult ar)
     {
         object[] objects = (object[])(ar.AsyncState ?? throw new ArgumentNullException(nameof(ar)));
         TcpClient client = (TcpClient)objects[0];
@@ -58,56 +61,70 @@ public class BackendListener
         byte[] readBuffer = (byte[])objects[2];
         string clientName = (string)objects[3];
 
+
+        void _Disconnect(string reason = "Unknown reason", bool error = false)
+        {
+            if(error) Console.Error.WriteLine($"Error! Closing connection with client {clientName}.   {reason}");
+            else Console.WriteLine($"Disconnecting from client {clientName}.   {reason}");
+
+            stream.Flush();
+            stream.Dispose();
+            client.Close();
+        }
+
+
         int bytesRead = stream.EndRead(ar);
 
         if (bytesRead > 0)
         {
             // read packet size and type
-            if(bytesRead < headerSize) bytesRead += stream.Read(readBuffer, bytesRead, headerSize - bytesRead);
+            if(bytesRead < headerSize) bytesRead += await stream.ReadAsync(readBuffer, bytesRead, headerSize - bytesRead);
             int packetSize = 0;
+            
             try
             {
                 packetSize = Convert.ToInt32(BitConverter.ToUInt64(readBuffer, 0));
             }
             catch (Exception e)
             {
-                Console.Error.WriteLine(string.Join(", ", readBuffer.Take(8).Select(x => x.ToString())));
-                Console.Error.WriteLine($"Error: could not decode packet size. Closing connection. {e.Message}");
-                stream.Dispose();
-                client.Close();
+                _Disconnect($"Could not decode packet size. {e.Message}", true);
                 return;
+            }
+
+            if(bytesRead != headerSize)
+            {
+                _Disconnect($"Read too many bytes when reading header.", true);
             }
 
             DataType dataType = (DataType)readBuffer[8];
             
             int bytesLeft = packetSize;
-            bytesLeft -= Math.Min(bytesRead - headerSize, bytesLeft);
 
-            Console.WriteLine($"\n\nReceived packet size: {packetSize}, bytes left: {bytesLeft}, bytes read: {bytesRead}");
+            Console.WriteLine($"\n\nReceived packet size: {packetSize}, bytes left: {bytesLeft}, bytes read: {bytesRead - headerSize}");
+
+            
             
             // start building packet
             byte[] packet = new byte[packetSize];
-            Array.Copy(readBuffer, headerSize, packet, 0, Math.Min(packetSize, bytesRead - headerSize));
+            // Array.Copy(readBuffer, headerSize, packet, 0, Math.Min(packetSize, bytesRead - headerSize));
 
-            // shift leftover bytes to beginning of buffer
-            int bytesLeftover = bytesRead - Math.Min(packetSize + headerSize, bytesRead);
-            if (bytesLeftover > 0)
-            {
-                Console.WriteLine($"Leftover bytes: {bytesLeftover}");
-                Array.Copy(readBuffer, Math.Max(bytesRead - bytesLeftover, 0), readBuffer, 0, bytesLeftover);
-            }
+            // // shift leftover bytes to beginning of buffer
+            // int bytesLeftover = bytesRead - Math.Min(packetSize + headerSize, bytesRead);
+            // if (bytesLeftover > 0)
+            // {
+            //     Console.WriteLine($"Leftover bytes: {bytesLeftover}");
+            //     Array.Copy(readBuffer, Math.Max(bytesRead - bytesLeftover, 0), readBuffer, 0, bytesLeftover);
+            // }
 
             // read packet
             while (bytesLeft > 0)
             {
-                bytesRead = stream.Read(readBuffer, bytesLeftover, Math.Min(readBuffer.Length, bytesLeft));
+                bytesRead = stream.Read(readBuffer, 0, Math.Min(readBuffer.Length, bytesLeft));
                 Array.Copy(readBuffer, 0, packet, Math.Max(packetSize - bytesLeft, 0), Math.Min(bytesRead, bytesLeft));
 
-                if (bytesLeft < bytesRead)
+                if (bytesRead > bytesLeft)
                 {
-                    Console.Error.WriteLine($"Error: read too many bytes on client {clientName}. Closing connection.");
-                    stream.Dispose();
-                    client.Close();
+                    _Disconnect($"Read more bytes than were left in packet.", true);
                     return;
                 }
 
@@ -119,14 +136,12 @@ public class BackendListener
             if (!handleSuccess) return;
 
             // Start reading again
-            stream.BeginRead(readBuffer, (int)bytesLeftover, (int)(readBuffer.Length - bytesLeftover), new AsyncCallback(ReadCallback), new object[] { client, stream, readBuffer, clientName });
+            stream.BeginRead(readBuffer, 0, headerSize, new AsyncCallback(ReadCallback), new object[] { client, stream, readBuffer, clientName });
         }
         else
         {
             // Client disconnected
-            Console.WriteLine("Client disconnected: " + clientName);
-            stream.Dispose();
-            client.Close();
+            _Disconnect("Client disconnected.");
         }
 
     }
@@ -138,9 +153,11 @@ public class BackendListener
         switch (dataType)
         {
             case DataType.Image:
-                string filePath = Path.Join(relativePath, clientName, Utils.Timestamp.ToString() + ".jpg");
+                string filePath = Path.Join(dataPath, clientName, Utils.Timestamp.ToString() + ".jpg");
                 Utils.WriteFileToArbitraryPath(packet, filePath);
-                database.InsertCameraData(filePath, clientName);
+
+                string webPath = Path.Join(webRelativeDataPath, clientName, Utils.Timestamp.ToString() + ".jpg");
+                database.InsertCameraData(webPath, clientName);
                 break;
             case DataType.Temperature:
                 database.InsertTemperatureData(BitConverter.ToSingle(packet, 0), clientName);

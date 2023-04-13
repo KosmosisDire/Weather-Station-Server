@@ -1,0 +1,394 @@
+.dark-theme
+{
+    --background-color: #010d1d;
+    --surface-color: #1e1f24;
+    --full-contrast: #ffffff;
+    --text-color: #cacaca;
+    --text-color-muted: #585858;
+    --accent-color: #0076d6;
+    --accent-color-muted: #144674;
+    --accent-color-text: #5288ec;
+
+    --background-color-rgb: 1, 13, 29;
+    --surface-color-rgb: 30, 31, 36;
+    --full-contrast-rgb: 255, 255, 255;
+    --text-color-rgb: 202, 202, 202;
+    --text-color-muted-rgb: 88, 88, 88;
+    --accent-color-rgb: 0, 118, 214;
+    --accent-color-muted-rgb: 20, 70, 116;
+    --accent-color-text-rgb: 82, 136, 236;
+
+}
+
+.light-theme
+{
+    --background-color: #d3cbb7;
+    --surface-color: #fdf6e3;
+    --full-contrast: #000000;
+    --text-color: #1d1c1c;
+    --text-color-muted: #271f1f;
+    --accent-color: #dfa60a;
+    --accent-color-muted: #f0dda8;
+    --accent-color-text: #471303;
+
+    --background-color-rgb: 211, 203, 183;
+    --surface-color-rgb: 253, 246, 227;
+    --full-contrast-rgb: 0, 0, 0;
+    --text-color-rgb: 29, 28, 28;
+    --text-color-muted-rgb: 77, 73, 73;
+    --accent-color-rgb: 223, 166, 10;
+    --accent-color-muted-rgb: 240, 221, 168;
+    --accent-color-text-rgb: 71, 19, 3;
+
+}
+
+body
+{
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    margin: 0;
+    padding: 0;
+
+    --surface-border-radius: 15px;
+}
+
+
+.chart-container
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    min-width: 600px;
+    height: inherit;
+    min-height: inherit;
+    margin: 0 auto;
+    padding: 0;
+    position: relative;
+    display: inline-block;
+}
+
+.row
+{
+    width: -webkit-fill-available;
+    margin: 15px;
+    padding: 15px;
+    gap: 15px;
+    display: flex;
+    height: fit-content;
+    flex-wrap: wrap;
+
+    border-radius: var(--surface-border-radius);
+    background-color: var(--surface-color);
+
+    box-shadow: #00000066 0px 4px 20px 5px;
+}
+
+vr 
+{
+    display: block;
+    width: 2px;
+    height: auto;
+    flex-basis: 2px;
+    flex-grow: 0;
+    min-height: inherit;
+    max-height: 100%;
+    background-color: var(--text-color-muted);
+    position: relative;
+    z-index: 6;
+}
+
+.webcam-image-container
+{
+    flex-grow: 1;
+    flex-basis: 0;
+    object-fit: cover;
+    min-width: 600px;
+    min-height: 0;
+    aspect-ratio: 16/12;
+    border-radius: var(--surface-border-radius);
+    user-select: none;
+    -webkit-user-drag: none;
+    border-bottom-color: rgba(var(--client-color), 0.7);
+    border-bottom-width: 6px;
+    border-bottom-style: ridge;
+
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+
+    
+}
+
+.webcam-image
+{
+    width: 100%;
+    height: 100%;
+    border-radius: var(--surface-border-radius);
+}
+
+.client-name
+{
+    font-size: 1.5em;
+    font-weight: 700;
+    margin: 0;
+    padding: 0;
+    color: var(--text-color);
+    text-align: center;
+    text-shadow: 0 0 5px rgba(var(--accent-color-rgb), 0.5);
+    position: absolute;
+    transform: translateY(-33%);
+
+    background-color: rgba(var(--surface-color-rgb), 0.5);
+    padding: 1px 8px;
+    border-radius: 3px;
+}
+
+.tooltip + .tooltiptext 
+{
+    visibility: hidden;
+    height: fit-content;
+    background-color: rgba(var(--client-color), 0.5);
+    font-weight: 700;
+    color: var(--text-color);
+    text-align: center;
+    border-radius: 3px;
+    padding: 5px;
+    position: relative;
+    transform: translate(0, 133%);
+    z-index: 1;
+
+    opacity: 0;
+    transition: opacity 0.25s;
+}
+
+.tooltip:hover + .tooltiptext 
+{
+    visibility: visible;
+    opacity: 1;
+}
+
+
+.labeled-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.progress-bar 
+{
+    width: 8em;
+    height: 24px;
+    border-radius: 25px;
+    background-color: #f1f1f1;
+    overflow: hidden;
+}
+  
+.progress-bar::-webkit-progress-bar 
+{
+background-color: var(--background-color);
+}
+
+.progress-bar::-webkit-progress-value 
+{
+background-color: var(--accent-color);
+border-radius: 25px;
+}
+  
+.text-input 
+{
+    display: block;
+    flex-grow: 0.4;
+    flex-basis: 0;
+    padding: 8px 12px;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--text-color);
+    border: 1px solid var(--text-color-muted);
+    border-radius: 4px;
+    background-color: var(--background-color);
+    transition: border-color 0.2s ease-in-out;
+    display: inline-block;
+}
+
+.text-input:focus 
+{
+    outline: none;
+    border-color: var(--text-color-muted);
+    box-shadow: 0 0 0 2px rgba(var(--accent-color-rgb), 0.5);
+}
+
+
+/* Toggle Styles */
+.theme-toggle {
+    --toggle-width: 50px;
+    --toggle-height: calc(var(--toggle-width) / 2.2);
+    --border-radius: calc(var(--toggle-height));
+    --handle-width: calc(var(--toggle-height) * 0.6);
+    --handle-radius: calc(var(--handle-width) / 2);
+    --handle-margin: calc((var(--toggle-height) - var(--handle-width)) / 2);
+    --handle-translation: calc(var(--toggle-width) - var(--handle-width) - (var(--handle-margin) * 2));
+
+    display: inline-block;
+    cursor: pointer;
+	margin: 10px;
+}
+
+/* animation to expand width, move handle, then contract width */
+@keyframes toggle-slide-right
+{
+    0%
+    {
+        width: var(--handle-width);
+        transform: translateX(0);
+    }
+    50%
+    {
+        width: calc(var(--toggle-width) * 0.5);
+    }
+    90%
+    {
+        width: var(--handle-width);
+    }
+    100%
+    {
+        transform: translateX(var(--handle-translation));
+    }
+}
+
+@keyframes toggle-slide-left
+{
+    0%
+    {
+        width: var(--handle-width);
+        transform: translateX(calc(var(--handle-translation) - ((var(--toggle-width) * 0.33) - var(--handle-width))));
+    }
+    70%
+    {
+        width: calc(var(--toggle-width) * 0.5);
+    }
+    100%
+    {
+        width: var(--handle-width);
+        transform: translateX(0);
+    }
+}
+
+/* just exapnd and contract */
+@keyframes toggle-expand-right
+{
+    0%
+    {
+        width: var(--handle-width);
+    }
+    100%
+    {
+        width: calc(var(--toggle-width) * 0.33);
+    }
+}
+
+@keyframes toggle-expand-left
+{
+    0%
+    {
+        width: var(--handle-width);
+        transform: translateX(var(--handle-translation));
+    }
+    100%
+    {
+        width: calc(var(--toggle-width) * 0.33);
+        transform: translateX(calc(var(--handle-translation) - ((var(--toggle-width) * 0.33) - var(--handle-width))));
+    }
+}
+
+@keyframes toggle-contract
+{
+    0%
+    {
+        width: calc(var(--toggle-width) * 0.33);
+    }
+    100%
+    {
+        width: var(--handle-width);
+    }
+}
+
+.toggle__input {
+    display: none;
+    z-index: 1000;
+}
+
+/* Fill in dark mode / default */
+.toggle__fill {
+    position: relative;
+    width: var(--toggle-width);
+    height: var(--toggle-height);
+    border-radius: var(--border-radius);
+	background-color: var(--accent-color-muted);
+
+    transition: background-color 0.2s;
+    z-index: 1000;
+
+    box-shadow: inset 0px 0px 10px 2px rgba(0, 0, 0, 0.2);
+
+	border: 1px solid var(--text-color-muted);
+}
+
+.theme-light .toggle__fill 
+{
+    box-shadow: inset 0px 0px 5px 2px rgba(var(--color-accent-rgb), 0.8);
+}
+
+/* Handle default */
+.toggle__fill::before {
+    content: "";
+    position: absolute;
+    left: var(--handle-margin);
+    top: calc(var(--handle-margin));
+    height: var(--handle-width);
+    width: var(--handle-width);
+
+    border-radius: var(--handle-radius);
+    background-color: var(--full-contrast);
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.2);
+    animation: toggle-slide-left 0.2s ease-in-out normal both;
+
+    z-index: 1000;
+}
+
+/* handle light*/
+.toggle__input:checked ~ .toggle__fill::before 
+{
+    animation: toggle-slide-right 0.2s ease-in-out normal both;
+}
+
+.toggle__input:active ~ .toggle__fill::before 
+{
+    animation: toggle-expand-right 0.2s ease-in-out normal both;
+}
+
+.toggle__input:active:checked ~ .toggle__fill::before
+{
+    animation: toggle-expand-left 0.2s ease-in-out normal both;
+}
+
+/* sun moon icon icon default */
+.toggle__fill::after {
+    content: "";
+    position: absolute;
+    right: var(--handle-margin);
+    top: calc(var(--handle-margin) * 0.9);
+    height: var(--handle-width);
+    width: var(--handle-width);
+    scale: 90%;
+    transition: transform 0.3s;
+    
+    background: url('https://api.iconify.design/lucide/moon.svg?color=white') no-repeat center center;
+}
+
+/* sun moon icon icon light */
+.toggle__input:checked ~ .toggle__fill::after
+{
+    transform: translate3d(calc(var(--handle-translation) * -1), 0, 0);
+    background: url('https://api.iconify.design/lucide/sun.svg') no-repeat center center;
+}

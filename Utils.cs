@@ -2,7 +2,7 @@ using System.IO;
 
 public static class Utils
 {
-    public static long Timestamp => new DateTimeOffset(DateTime.UtcNow).ToUniversalTime().ToUnixTimeSeconds();
+    public static long Timestamp => new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
 
     public static void WriteFileToArbitraryPath(byte[] bytes, string path)
     {
