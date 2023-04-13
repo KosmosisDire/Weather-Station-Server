@@ -4,18 +4,24 @@
 <head>
 	<title>Chart.js Example</title>
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 	<script src="sql.js"></script>
 	<script type="module" src="index.js"></script>
+	<link rel="stylesheet" href="style.css">
 </head>
 
-<body>
-	<div>
-		<canvas id="temperature-chart"></canvas>
-	</div>
-	<div>
-		<canvas id="pressure-chart"></canvas>
-	</div>
+<body class="dark-theme">
+	<div class="row">
 
+		<div class="chart-container">
+			<canvas id="pressure-chart"></canvas>
+		</div>
+
+		<div class="chart-container">
+			<canvas id="temperature-chart"></canvas>
+		</div>
+
+	</div>
 </body>
 
 </html>
